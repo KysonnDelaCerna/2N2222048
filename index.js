@@ -98,17 +98,106 @@ function Grid () {
         this.playArea.push(new Array(this.rowsAndCols).fill(null));
     }
 
+    this.compareArray = function (a, b) {
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     this.slide = function (direction) {
-        if (direction === "LEFT") {
+        let moved = false;
+        let x;
+        if (direction === 'LEFT' || direction === 'UP') {
             for (let i = 0; i < this.rowsAndCols; i++) {
+                x = this.playArea[i];
                 this.playArea[i] = this.playArea[i].filter(x => x);
                 this.playArea[i] = this.playArea[i].concat(new Array(this.rowsAndCols - this.playArea[i].length).fill(null));
+                if (!this.compareArray(x, this.playArea[i])) {
+                    moved = true;
+                }
             }
-        } else if (direction === "RIGHT") {
+        } else if (direction === 'RIGHT' || direction === 'DOWN') {
             for (let i = 0; i < this.rowsAndCols; i++) {
+                x = this.playArea[i];
                 this.playArea[i] = this.playArea[i].filter(x => x);
                 this.playArea[i] = new Array(this.rowsAndCols - this.playArea[i].length).fill(null).concat(this.playArea[i]);
+                if (!this.compareArray(x, this.playArea[i])) {
+                    moved = true;
+                }
             }
+        }
+        return moved;
+    }
+
+    this.merge = function (direction) {
+        let merged = false;
+        if (direction === 'RIGHT' || direction === 'DOWN') {
+            for (let i = 0; i < this.rowsAndCols; i++) {
+                for (let j = 0; j < this.rowsAndCols - 1; j++) {
+                    if (null === this.playArea[i][j] || null === this.playArea[i][j + 1]) {
+                        continue;
+                    }
+                    if (this.playArea[i][j].value === this.playArea[i][j + 1].value) {
+                        merged = true;
+                        this.playArea[i][j] = null;
+                        this.playArea[i][j + 1].value *= 2;
+                        this.score += this.playArea[i][j + 1].value;
+                        j++;
+                    }
+                }
+            }
+        } else if (direction === 'LEFT' || direction === 'UP') {
+            for (let i = 0; i < this.rowsAndCols; i++) {
+                for (let j = this.rowsAndCols - 1; j >= 1; j--) {
+                    if (null === this.playArea[i][j] || null === this.playArea[i][j - 1]) {
+                        continue;
+                    }
+                    if (this.playArea[i][j].value === this.playArea[i][j - 1].value) {
+                        merged = true;
+                        this.playArea[i][j] = null;
+                        this.playArea[i][j - 1].value *= 2;
+                        this.score += this.playArea[i][j - 1].value;
+                        j--;
+                    }
+                }
+            }
+        }
+        return merged;
+    }
+
+    this.transposeArea = function () {
+        let newGrid = [];
+
+        for (let i = 0; i < this.rowsAndCols; i++) {
+            newGrid.push([]);
+            for (let j = 0; j < this.rowsAndCols; j++) {
+                newGrid[i][j] = this.playArea[j][i];
+            }
+        }
+
+        this.playArea = newGrid;
+    }
+
+    this.move = function (direction) {
+        let spawn = false;
+
+        if (direction === 'UP' || direction === 'DOWN') {
+            this.transposeArea();
+        }
+
+        spawn = spawn ? spawn : this.slide(direction);
+        spawn = spawn ? spawn : this.merge(direction);
+        spawn = spawn ? spawn : this.slide(direction);
+
+        if (direction === 'UP' || direction === 'DOWN') {
+            this.transposeArea();
+        }
+
+        if (spawn) {
+            this.newTile();
         }
     }
 }
@@ -150,9 +239,16 @@ function draw () {
     noLoop();
 }
 
-function mouseClicked () {
-    grid.expand();
-    grid.newTile();
+function keyPressed () {
+    if (keyCode === UP_ARROW || keyCode === 87) {
+        grid.move('UP');
+    } else if (keyCode === DOWN_ARROW || keyCode === 83) {
+        grid.move('DOWN');
+    } else if (keyCode === LEFT_ARROW || keyCode === 65) {
+        grid.move('LEFT');
+    } else if (keyCode === RIGHT_ARROW || keyCode === 68) {
+        grid.move('RIGHT');
+    }
 
     draw();
 }
