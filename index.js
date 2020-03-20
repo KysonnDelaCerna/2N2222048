@@ -4,7 +4,7 @@ let gridWidth = 500;
 let grid;
 
 function Tile () {
-    this.value = random(1) < 0.9 ? Math.pow(2, grid.rowsAndCols - 1) : Math.pow(2, grid.rowsAndCols);
+    this.value = random(1) < 0.9 ? 2 : 4;
 
     this.tileColor = function () {
         switch (this.value) {
@@ -46,6 +46,7 @@ function Grid () {
     this.playArea;
     this.rowsAndCols;
     this.maxRowsAndCols;
+    this.expandFlag = false;
 
     this.numNewTiles;
 
@@ -75,6 +76,7 @@ function Grid () {
 
     this.setUp = function () {
         this.rowsAndCols = 2;
+        this.expandFlag = false;
         this.maxRowsAndCols = 10;
         this.numNewTiles = 1;
         this.score = 0;
@@ -96,6 +98,7 @@ function Grid () {
         });
         
         this.playArea.push(new Array(this.rowsAndCols).fill(null));
+        this.expandFlag = false;
     }
 
     this.compareArray = function (a, b) {
@@ -142,25 +145,31 @@ function Grid () {
                     }
                     if (this.playArea[i][j].value === this.playArea[i][j + 1].value) {
                         merged = true;
-                        this.playArea[i][j] = null;
-                        this.playArea[i][j + 1].value *= 2;
-                        this.score += this.playArea[i][j + 1].value;
+                        this.playArea[i][j + 1] = null;
+                        this.playArea[i][j].value *= 2;
+                        if (Math.log2(this.playArea[i][j].value) > this.rowsAndCols) {
+                            this.expandFlag = true;
+                        }
+                        this.score += this.playArea[i][j].value;
                         j++;
                     }
                 }
             }
         } else if (direction === 'LEFT' || direction === 'UP') {
             for (let i = 0; i < this.rowsAndCols; i++) {
-                for (let j = this.rowsAndCols - 1; j >= 1; j--) {
-                    if (null === this.playArea[i][j] || null === this.playArea[i][j - 1]) {
+                for (let j = 0; j < this.rowsAndCols - 1; j++) {
+                    if (null === this.playArea[i][j] || null === this.playArea[i][j + 1]) {
                         continue;
                     }
-                    if (this.playArea[i][j].value === this.playArea[i][j - 1].value) {
+                    if (this.playArea[i][j].value === this.playArea[i][j + 1].value) {
                         merged = true;
                         this.playArea[i][j] = null;
-                        this.playArea[i][j - 1].value *= 2;
-                        this.score += this.playArea[i][j - 1].value;
-                        j--;
+                        this.playArea[i][j + 1].value *= 2;
+                        if (Math.log2(this.playArea[i][j + 1].value) > this.rowsAndCols) {
+                            this.expandFlag = true;
+                        }
+                        this.score += this.playArea[i][j + 1].value;
+                        j++;
                     }
                 }
             }
@@ -183,17 +192,25 @@ function Grid () {
 
     this.move = function (direction) {
         let spawn = false;
+        let result;
 
         if (direction === 'UP' || direction === 'DOWN') {
             this.transposeArea();
         }
 
-        spawn = spawn ? spawn : this.slide(direction);
-        spawn = spawn ? spawn : this.merge(direction);
-        spawn = spawn ? spawn : this.slide(direction);
+        result = this.slide(direction);
+        spawn = spawn ? spawn : result;
+        result = this.merge(direction);
+        spawn = spawn ? spawn : result;
+        result = this.slide(direction);
+        spawn = spawn ? spawn : result;
 
         if (direction === 'UP' || direction === 'DOWN') {
             this.transposeArea();
+        }
+
+        if (this.expandFlag) {
+            this.expand();
         }
 
         if (spawn) {
