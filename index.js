@@ -1,11 +1,10 @@
-let rowsAndCols = 2;
 let height = 500;
 let width = 500;
 let gridWidth = 500;
 let grid;
 
 function Tile () {
-    this.value = random(1) < 0.9 ? 2048 : 16384;
+    this.value = random(1) < 0.9 ? Math.pow(2, grid.rowsAndCols - 1) : Math.pow(2, grid.rowsAndCols);
 
     this.tileColor = function () {
         switch (this.value) {
@@ -31,7 +30,7 @@ function Tile () {
     }
 
     this.textSize = function () {
-        return 0.75 * (gridWidth / rowsAndCols - 8) / (this.value.toString().length < 2 ? this.value.toString().length : this.value.toString().length / 1.5);
+        return 0.75 * (gridWidth / grid.rowsAndCols - 8) / (this.value.toString().length < 2 ? this.value.toString().length : this.value.toString().length / 1.5);
     }
 
     this.textColor = function () {
@@ -42,24 +41,30 @@ function Tile () {
     }
 }
 
-function Grid () {
+function Grid (rowsAndCols) {
     this.score;
     this.playArea;
+    this.rowsAndCols = rowsAndCols || 2;
+    this.maxRowsAndCols = 10;
+
+    this.numNewTiles = 1;
 
     this.newTile = function () {
-        let availableSpaces = [];
+        for (let h = 0; h < this.numNewTiles; h++) {
+            let availableSpaces = [];
 
-        for (let i = 0; i < rowsAndCols; i++) {
-            for (let j = 0; j < rowsAndCols; j++) {
-                if (this.playArea[i][j] == null) {
-                    availableSpaces.push([i, j]);
+            for (let i = 0; i < this.rowsAndCols; i++) {
+                for (let j = 0; j < this.rowsAndCols; j++) {
+                    if (this.playArea[i][j] == null) {
+                        availableSpaces.push([i, j]);
+                    }
                 }
             }
+
+            let [x, y] = random(availableSpaces);
+
+            this.playArea[x][y] = new Tile ();
         }
-
-        let [x, y] = random(availableSpaces);
-
-        this.playArea[x][y] = new Tile ();
     }
 
     this.setUp = function () {
@@ -67,6 +72,22 @@ function Grid () {
         this.playArea = [[null, null], [null, null]];
         this.newTile();
         this.newTile();
+    }
+
+    this.expand = function () {
+        if (this.rowsAndCols >= this.maxRowsAndCols) {
+            return;
+        }
+
+        this.rowsAndCols++;
+        this.numNewTiles++;
+
+        this.playArea.forEach(function (item) {
+            item.push(null);
+        });
+        
+        this.playArea.push(new Array(this.rowsAndCols).fill(null));
+        console.table(this.playArea);
     }
 }
 
@@ -78,15 +99,16 @@ function setup () {
 
 function draw () {
     background(209, 193, 180);
-    let w = gridWidth / rowsAndCols;
+    let w = gridWidth / grid.rowsAndCols;
 
-    for (let i = 0; i < rowsAndCols; i++) {
-        for (let j = 0; j < rowsAndCols; j++) {
+    for (let i = 0; i < grid.rowsAndCols; i++) {
+        for (let j = 0; j < grid.rowsAndCols; j++) {
             noFill();
             strokeWeight(10);
             stroke(199, 181, 151);
             rect(i * w, j * w, w, w);
 
+            console.log(grid.rowsAndCols);
             if (grid.playArea[i][j]) {
                 push();
                 translate(i * w, j * w);
@@ -106,5 +128,6 @@ function draw () {
 }
 
 function mouseClicked () {
-    rowsAndCols++;
+    grid.expand();
+    grid.newTile();
 }
