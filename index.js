@@ -41,13 +41,13 @@ function Tile () {
     }
 }
 
-function Grid (rowsAndCols) {
+function Grid () {
     this.score;
     this.playArea;
-    this.rowsAndCols = rowsAndCols || 2;
-    this.maxRowsAndCols = 10;
+    this.rowsAndCols;
+    this.maxRowsAndCols;
 
-    this.numNewTiles = 1;
+    this.numNewTiles;
 
     this.newTile = function () {
         for (let h = 0; h < this.numNewTiles; h++) {
@@ -61,13 +61,22 @@ function Grid (rowsAndCols) {
                 }
             }
 
+            if (availableSpaces.length == 0) {
+                return false;
+            }
+
             let [x, y] = random(availableSpaces);
 
             this.playArea[x][y] = new Tile ();
         }
+
+        return true;
     }
 
     this.setUp = function () {
+        this.rowsAndCols = 2;
+        this.maxRowsAndCols = 10;
+        this.numNewTiles = 1;
         this.score = 0;
         this.playArea = [[null, null], [null, null]];
         this.newTile();
@@ -87,7 +96,20 @@ function Grid (rowsAndCols) {
         });
         
         this.playArea.push(new Array(this.rowsAndCols).fill(null));
-        console.table(this.playArea);
+    }
+
+    this.slide = function (direction) {
+        if (direction === "LEFT") {
+            for (let i = 0; i < this.rowsAndCols; i++) {
+                this.playArea[i] = this.playArea[i].filter(x => x);
+                this.playArea[i] = this.playArea[i].concat(new Array(this.rowsAndCols - this.playArea[i].length).fill(null));
+            }
+        } else if (direction === "RIGHT") {
+            for (let i = 0; i < this.rowsAndCols; i++) {
+                this.playArea[i] = this.playArea[i].filter(x => x);
+                this.playArea[i] = new Array(this.rowsAndCols - this.playArea[i].length).fill(null).concat(this.playArea[i]);
+            }
+        }
     }
 }
 
@@ -108,10 +130,9 @@ function draw () {
             stroke(199, 181, 151);
             rect(i * w, j * w, w, w);
 
-            console.log(grid.rowsAndCols);
             if (grid.playArea[i][j]) {
                 push();
-                translate(i * w, j * w);
+                translate(j * w, i * w);
                 fill(grid.playArea[i][j].tileColor());
                 strokeWeight(0);
                 rect(4, 4, w - 8, w - 8);
@@ -125,9 +146,13 @@ function draw () {
             }
         }
     }
+
+    noLoop();
 }
 
 function mouseClicked () {
     grid.expand();
     grid.newTile();
+
+    draw();
 }
