@@ -47,6 +47,7 @@ function Grid () {
     this.rowsAndCols;
     this.maxRowsAndCols;
     this.expandFlag = false;
+    this.isGameOver = false;
 
     this.numNewTiles;
 
@@ -74,7 +75,50 @@ function Grid () {
         return true;
     }
 
+    this.checkGameOver = function () {
+        for (let i = 0; i < this.rowsAndCols; i++) {
+            for (let j = 0; j < this.rowsAndCols; j++) {
+                if (!this.playArea[i][j]) {
+                    return false;
+                }
+                if (i - 1 > 0) {
+                    if (this.playArea[i - 1][j]) {
+                        if (this.playArea[i - 1][j].value === this.playArea[i][j].value) {
+                            return false;
+                        }
+                    }
+                }
+                if (i + 1 < this.rowsAndCols) {
+                    if (this.playArea[i + 1][j]) {
+                        if (this.playArea[i + 1][j].value === this.playArea[i][j].value) {
+                            return false;
+                        }
+                    }
+                }
+                if (j - 1 > 0) {
+                    if (this.playArea[i][j - 1]) {
+                        if (this.playArea[i][j - 1].value === this.playArea[i][j].value) {
+                            return false;
+                        }
+                    }
+                }
+                if (j + 1 < this.rowsAndCols) {
+                    if (this.playArea[i][j + 1]) {
+                        if (this.playArea[i][j + 1].value === this.playArea[i][j].value) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        console.log('game over');
+
+        return true;
+    }
+
     this.setUp = function () {
+        this.isGameOver = false;
         this.rowsAndCols = 2;
         this.expandFlag = false;
         this.maxRowsAndCols = 10;
@@ -191,6 +235,10 @@ function Grid () {
     }
 
     this.move = function (direction) {
+        if (this.isGameOver) {
+            return;
+        }
+
         let spawn = false;
         let result;
 
@@ -215,6 +263,7 @@ function Grid () {
 
         if (spawn) {
             this.newTile();
+            this.isGameOver = this.checkGameOver();
         }
     }
 }
