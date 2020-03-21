@@ -5,6 +5,7 @@ let grid;
 
 function Tile () {
     this.value = random(1) < 0.9 ? 2 : 4;
+    this.scaleAnimationCounter = 1;
 
     this.tileColor = function () {
         switch (this.value) {
@@ -39,6 +40,18 @@ function Tile () {
         }
         return '#F9F6F2';
     }
+
+    this.pop = function () {
+        this.scaleAnimationCounter = 10;
+    }
+
+    this.scale = function () {
+        if (this.scaleAnimationCounter == 1) {
+            return 1;
+        } 
+
+        return map(Math.sqrt(25 - Math.pow(this.scaleAnimationCounter-- - 5, 2)), 0, 5, 1, 1.10);
+    }
 }
 
 function Grid () {
@@ -48,6 +61,7 @@ function Grid () {
     this.maxRowsAndCols;
     this.expandFlag = false;
     this.isGameOver = false;
+    this.scaleAnimationCounter = 1;
 
     this.numNewTiles;
 
@@ -70,6 +84,7 @@ function Grid () {
             let [x, y] = random(availableSpaces);
 
             this.playArea[x][y] = new Tile ();
+            this.playArea[x][y].pop();
         }
 
         return true;
@@ -124,7 +139,13 @@ function Grid () {
         this.maxRowsAndCols = 10;
         this.numNewTiles = 1;
         this.score = 0;
-        this.playArea = [[null, null], [null, null]];
+        this.playArea = [];
+        for (let i = 0; i < this.rowsAndCols; i++) {
+            this.playArea.push([]);
+            for (let j = 0; j < this.rowsAndCols; j++) {
+                this.playArea[i].push(null);
+            }
+        }
         this.newTile();
         this.newTile();
     }
@@ -143,6 +164,8 @@ function Grid () {
         
         this.playArea.push(new Array(this.rowsAndCols).fill(null));
         this.expandFlag = false;
+
+        this.scaleAnimationCounter = 10;
     }
 
     this.compareArray = function (a, b) {
@@ -191,6 +214,7 @@ function Grid () {
                         merged = true;
                         this.playArea[i][j + 1] = null;
                         this.playArea[i][j].value *= 2;
+                        this.playArea[i][j].pop();
                         if (Math.log2(this.playArea[i][j].value) > this.rowsAndCols) {
                             this.expandFlag = true;
                         }
@@ -209,6 +233,7 @@ function Grid () {
                         merged = true;
                         this.playArea[i][j] = null;
                         this.playArea[i][j + 1].value *= 2;
+                        this.playArea[i][j + 1].pop();
                         if (Math.log2(this.playArea[i][j + 1].value) > this.rowsAndCols) {
                             this.expandFlag = true;
                         }
@@ -266,6 +291,13 @@ function Grid () {
             this.isGameOver = this.checkGameOver();
         }
     }
+
+    this.scale = function () {
+        if (this.scaleAnimationCounter == 1) {
+            return 1;
+        }
+        return map(Math.log10(this.scaleAnimationCounter--), 0, 1, 1, this.rowsAndCols / (this.rowsAndCols - 1));
+    }
 }
 
 function setup () {
@@ -278,21 +310,27 @@ function draw () {
     background(209, 193, 180);
     let w = gridWidth / grid.rowsAndCols;
 
+    push();
+    scale(grid.scale());
     for (let i = 0; i < grid.rowsAndCols; i++) {
         for (let j = 0; j < grid.rowsAndCols; j++) {
             noFill();
             strokeWeight(10);
             stroke(199, 181, 151);
             rect(i * w, j * w, w, w);
-
+        }
+    }
+    for (let i = 0; i < grid.rowsAndCols; i++) {
+        for (let j = 0; j < grid.rowsAndCols; j++) {
             if (grid.playArea[i][j]) {
                 push();
-                translate(j * w, i * w);
+                translate(j * w + w / 2, i * w + w / 2);
                 fill(grid.playArea[i][j].tileColor());
                 strokeWeight(0);
-                rect(4, 4, w - 8, w - 8);
+                rectMode(CENTER);
+                scale(grid.playArea[i][j].scale());
+                rect(0, 0, w - 8, w - 8);
 
-                translate(w / 2, w / 2);
                 fill(grid.playArea[i][j].textColor());
                 textSize(grid.playArea[i][j].textSize());
                 textAlign(CENTER, CENTER);
@@ -301,8 +339,7 @@ function draw () {
             }
         }
     }
-
-    noLoop();
+    pop();
 }
 
 function keyPressed () {
@@ -315,6 +352,4 @@ function keyPressed () {
     } else if (keyCode === RIGHT_ARROW || keyCode === 68) {
         grid.move('RIGHT');
     }
-
-    draw();
 }
