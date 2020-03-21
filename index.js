@@ -5,7 +5,8 @@ let grid;
 
 function Tile () {
     this.value = random(1) < 0.9 ? 2 : 4;
-    this.scaleAnimationCounter = 1;
+    this.popScaleAnimationCounter = 1;
+    this.newScaleAnimationCounter = 10;
 
     this.tileColor = function () {
         switch (this.value) {
@@ -42,15 +43,22 @@ function Tile () {
     }
 
     this.pop = function () {
-        this.scaleAnimationCounter = 10;
+        this.popScaleAnimationCounter = 10;
+    }
+
+    this.new = function () {
+        this.newScaleAnimationCounter = 1;
     }
 
     this.scale = function () {
-        if (this.scaleAnimationCounter == 1) {
+        if (this.popScaleAnimationCounter == 1 && this.newScaleAnimationCounter == 10) {
             return 1;
-        } 
-
-        return map(Math.sqrt(25 - Math.pow(this.scaleAnimationCounter-- - 5, 2)), 0, 5, 1, 1.10);
+        } else if (this.popScaleAnimationCounter > 1) {
+            this.newScaleAnimationCounter = 10;
+            return map(Math.sqrt(25 - Math.pow(this.popScaleAnimationCounter-- - 5, 2)), 0, 5, 1, 1.15);
+        } else if (this.newScaleAnimationCounter < 10) {
+            return map(Math.log10(this.newScaleAnimationCounter++), 0, 1, 0.01, 1);
+        }
     }
 }
 
@@ -84,7 +92,7 @@ function Grid () {
             let [x, y] = random(availableSpaces);
 
             this.playArea[x][y] = new Tile ();
-            this.playArea[x][y].pop();
+            this.playArea[x][y].new();
         }
 
         return true;
