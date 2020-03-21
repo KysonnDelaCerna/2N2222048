@@ -424,6 +424,8 @@ function draw () {
     }
     pop();
 
+    select('#score').html(`Score: ${grid.score}`);
+
     if (grid.isGameOver) {
         push();
         translate(gridWidth / 2, gridWidth / 2);
