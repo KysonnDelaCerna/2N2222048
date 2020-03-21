@@ -59,9 +59,9 @@ function Grid () {
     this.playArea;
     this.rowsAndCols;
     this.maxRowsAndCols;
-    this.expandFlag = false;
-    this.isGameOver = false;
-    this.scaleAnimationCounter = 1;
+    this.expandFlag;
+    this.isGameOver;
+    this.scaleAnimationCounter;
 
     this.numNewTiles;
 
@@ -133,6 +133,7 @@ function Grid () {
     }
 
     this.setUp = function () {
+        this.scaleAnimationCounter = 1
         this.isGameOver = false;
         this.rowsAndCols = 2;
         this.expandFlag = false;
@@ -304,6 +305,8 @@ function setup () {
     grid = new Grid ();
     grid.setUp();
     createCanvas(width, height);
+    pixelDensity(1);
+    frameRate(60);
 }
 
 function draw () {
@@ -351,5 +354,7 @@ function keyPressed () {
         grid.move('LEFT');
     } else if (keyCode === RIGHT_ARROW || keyCode === 68) {
         grid.move('RIGHT');
+    } else if (keyCode === 82) {
+        grid.setUp();
     }
 }
