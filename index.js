@@ -3,10 +3,45 @@ let width = 500;
 let gridWidth = 500;
 let grid;
 
-function Tile () {
+function Tile (x, y) {
     this.value = random(1) < 0.9 ? 2 : 4;
     this.popScaleAnimationCounter = 1;
     this.newScaleAnimationCounter = 10;
+    this.curPos = [x, y];
+    this.prevPos;
+    this.translateAnimationCounter = 1;
+
+    this.updatePos = function (x, y) {
+        this.prevPos = this.curPos;
+        this.curPos = [x, y];
+
+        this.translateAnimationCounter = 10;
+    }
+
+    this.angle = function () {
+        if (this.curPos[0] > this.prevPos[0]) {
+            return radians(-90);
+        }
+        if (this.curPos[0] < this.prevPos[0]) {
+            return radians(90);
+        }
+        if (this.curPos[1] > this.prevPos[1]) {
+            return radians(180);
+        }
+        if (this.curPos[1] < this.prevPos[1]) {
+            return radians(0);
+        }
+    }
+
+    this.translation = function () {
+        if (this.translateAnimationCounter == 1 || !this.prevPos) {
+            return [0, 0];
+        }
+        
+        let w = gridWidth / grid.rowsAndCols;
+
+        return [this.angle(), map(Math.log10(this.translateAnimationCounter--), 0, 1, 0 ,dist(this.curPos[0], this.curPos[1], this.prevPos[0], this.prevPos[1]) * w)];
+    }
 
     this.tileColor = function () {
         switch (this.value) {
@@ -70,8 +105,8 @@ function Grid () {
     this.expandFlag;
     this.isGameOver;
     this.scaleAnimationCounter;
-
     this.numNewTiles;
+    this.slidingTiles;
 
     this.newTile = function () {
         for (let h = 0; h < this.numNewTiles; h++) {
@@ -91,7 +126,7 @@ function Grid () {
 
             let [x, y] = random(availableSpaces);
 
-            this.playArea[x][y] = new Tile ();
+            this.playArea[x][y] = new Tile (x, y);
             this.playArea[x][y].new();
         }
 
@@ -141,6 +176,7 @@ function Grid () {
     }
 
     this.setUp = function () {
+        this.slidingTiles = [];
         this.scaleAnimationCounter = 1
         this.isGameOver = false;
         this.rowsAndCols = 2;
@@ -221,6 +257,8 @@ function Grid () {
                     }
                     if (this.playArea[i][j].value === this.playArea[i][j + 1].value) {
                         merged = true;
+                        this.playArea[i][j + 1].updatePos(i, j);
+                        this.slidingTiles.push(this.playArea[i][j + 1]);
                         this.playArea[i][j + 1] = null;
                         this.playArea[i][j].value *= 2;
                         this.playArea[i][j].pop();
@@ -240,6 +278,8 @@ function Grid () {
                     }
                     if (this.playArea[i][j].value === this.playArea[i][j + 1].value) {
                         merged = true;
+                        this.playArea[i][j].updatePos(i, j);
+                        this.slidingTiles.push(this.playArea[i][j]);
                         this.playArea[i][j] = null;
                         this.playArea[i][j + 1].value *= 2;
                         this.playArea[i][j + 1].pop();
@@ -266,6 +306,16 @@ function Grid () {
         }
 
         this.playArea = newGrid;
+    }
+
+    this.updateTilePositions = function () {
+        for (let i = 0; i < this.rowsAndCols; i++) {
+            for (let j = 0; j < this.rowsAndCols; j++) {
+                if (this.playArea[i][j]) {
+                    this.playArea[i][j].updatePos(i, j);
+                }
+            }
+        }
     }
 
     this.move = function (direction) {
@@ -296,6 +346,8 @@ function Grid () {
         }
 
         if (spawn) {
+            this.updateTilePositions();
+
             this.newTile();
             this.isGameOver = this.checkGameOver();
         }
@@ -331,11 +383,34 @@ function draw () {
             rect(i * w, j * w, w, w);
         }
     }
+    for (let i = 0; i < grid.slidingTiles; i++) {
+        if (grid.slidingTiles[i].translateAnimationCounter > 1) {
+            push();
+            translate(j * w + w / 2, i * w + w / 2);
+            let [angle, distance] = grid.slidingTiles[i].translation();
+            translate(p5.Vector.fromAngle(angle, distance));
+            fill(grid.slidingTiles[i].tileColor());
+            strokeWeight(0);
+            rectMode(CENTER);
+            scale(grid.slidingTiles[i].scale());
+            rect(0, 0, w - 8, w - 8);
+
+            fill(grid.slidingTiles[i].textColor());
+            textSize(grid.slidingTiles[i].textSize());
+            textAlign(CENTER, CENTER);
+            text(grid.slidingTiles[i].value, 0, 0);
+            pop();
+        } else {
+            grid.slidingTiles = grid.slidingTiles.splice(i--, 1);
+        }
+    }
     for (let i = 0; i < grid.rowsAndCols; i++) {
         for (let j = 0; j < grid.rowsAndCols; j++) {
             if (grid.playArea[i][j]) {
                 push();
                 translate(j * w + w / 2, i * w + w / 2);
+                let [angle, distance] = grid.playArea[i][j].translation();
+                translate(p5.Vector.fromAngle(angle, distance));
                 fill(grid.playArea[i][j].tileColor());
                 strokeWeight(0);
                 rectMode(CENTER);
