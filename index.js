@@ -365,6 +365,7 @@ function setup () {
     createCanvas(width, height);
     pixelDensity(1);
     frameRate(60);
+    mapSwipes();
 }
 
 function draw () {
@@ -447,4 +448,24 @@ function keyPressed () {
     } else if (keyCode === 82) {
         grid.setUp();
     }
+}
+
+function mapSwipes () {
+    let zt = new ZingTouch.Region(document.body);
+    let body = document.getElementsByTagName('body');
+
+    zt.bind(body[0], 'swipe', function (e) {
+        let dir = e.detail.data[0].currentDirection;
+
+        console.log(dir);
+        if (dir < 135 && dir > 45) {
+            grid.move('UP');
+        } else if (dir < 225 && dir > 135) {
+            grid.move('LEFT');
+        } else if (dir < 315 && dir > 225) {
+            grid.move('DOWN');
+        } else {
+            grid.move('RIGHT');
+        }
+    }, false);
 }
