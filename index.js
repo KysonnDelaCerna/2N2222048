@@ -1,4 +1,4 @@
-let gridWidth = 500;
+let gridWidth;
 let grid;
 
 function Tile (x, y) {
@@ -358,11 +358,12 @@ function Grid () {
 }
 
 function setup () {
+    pixelDensity(1);
+    frameRate(60);
+    gridWidth = Math.min(Math.floor(0.95 * displayWidth), Math.floor(0.75 * displayHeight), 500);
     grid = new Grid ();
     grid.setUp();
     createCanvas(gridWidth, gridWidth).parent('canvas');
-    pixelDensity(1);
-    frameRate(60);
     mapSwipes();
 }
 
@@ -451,21 +452,23 @@ function keyPressed () {
 }
 
 function mapSwipes () {
-    let zt = new ZingTouch.Region(document.body);
     let body = document.getElementsByTagName('body');
 
-    zt.bind(body[0], 'swipe', function (e) {
-        let dir = e.detail.data[0].currentDirection;
+    let listener = new Hammer(body[0], {});
 
-        console.log(dir);
-        if (dir < 135 && dir > 45) {
-            grid.move('UP');
-        } else if (dir < 225 && dir > 135) {
-            grid.move('LEFT');
-        } else if (dir < 315 && dir > 225) {
-            grid.move('DOWN');
-        } else {
+    listener.on('swipe', function (e) {
+        let angle = e.angle;
+
+        if (angle >= 0 && angle < 45 || angle < 0 && angle > -45) {
             grid.move('RIGHT');
+        } else if (angle <= 180 && angle > 135 || angle > -180 && angle < -135) {
+            grid.move('LEFT');
+        } else if (angle >= 45 && angle <= 135) {
+            grid.move('DOWN');
+        } else if (angle <= -45 && angle >= -135) {
+            grid.move('UP');
         }
-    }, false);
+    });
+
+    listener.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
 }
