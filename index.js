@@ -169,9 +169,6 @@ function Grid () {
                 }
             }
         }
-
-        console.log('game over');
-
         return true;
     }
 
@@ -193,6 +190,7 @@ function Grid () {
         }
         this.newTile();
         this.newTile();
+        draw();
     }
 
     this.expand = function () {
@@ -426,6 +424,15 @@ function draw () {
         }
     }
     pop();
+
+    if (grid.isGameOver) {
+        push();
+        translate(gridWidth / 2, gridWidth / 2);
+        textAlign(CENTER, CENTER);
+        textSize(gridWidth / 6);
+        text('Game Over', 0, 0);
+        pop();
+    }
 }
 
 function keyPressed () {
