@@ -1,5 +1,3 @@
-let height = 500;
-let width = 500;
 let gridWidth = 500;
 let grid;
 
@@ -362,7 +360,7 @@ function Grid () {
 function setup () {
     grid = new Grid ();
     grid.setUp();
-    createCanvas(width, height);
+    createCanvas(gridWidth, gridWidth).parent('canvas');
     pixelDensity(1);
     frameRate(60);
     mapSwipes();
