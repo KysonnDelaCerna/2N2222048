@@ -105,6 +105,7 @@ function Grid () {
     this.scaleAnimationCounter;
     this.numNewTiles;
     this.slidingTiles;
+    this.isAnimating;
 
     this.newTile = function () {
         for (let h = 0; h < this.numNewTiles; h++) {
@@ -171,6 +172,7 @@ function Grid () {
     }
 
     this.setUp = function () {
+        this.isAnimating = 20;
         this.slidingTiles = [];
         this.scaleAnimationCounter = 1
         this.isGameOver = false;
@@ -342,6 +344,11 @@ function Grid () {
         }
 
         if (spawn) {
+            if (this.isAnimating == 0) {
+                this.isAnimating = 20;
+                draw();
+            }
+
             this.updateTilePositions();
 
             this.newTile();
@@ -359,7 +366,7 @@ function Grid () {
 
 function setup () {
     pixelDensity(1);
-    frameRate(60);
+    //frameRate(60);
     gridWidth = Math.min(Math.floor(0.95 * displayWidth), Math.floor(0.75 * displayHeight), 500);
     grid = new Grid ();
     grid.setUp();
@@ -368,6 +375,10 @@ function setup () {
 }
 
 function draw () {
+    if (grid.isAnimating == 0) {
+        return;
+    }
+
     background(209, 193, 180);
     let w = gridWidth / grid.rowsAndCols;
 
@@ -435,6 +446,8 @@ function draw () {
         text('Game Over', 0, 0);
         pop();
     }
+
+    grid.isAnimating--;
 }
 
 function keyPressed () {
