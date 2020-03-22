@@ -60,12 +60,40 @@ function Tile (x, y) {
             case 32768: return '#72B6DD';
             case 65536: return '#5EA2E3';
             case 131072: return '#027DC0';
+            case 262144: return '#52FFA1';
+            case 524288: return '#1BF17C';
+            case 1048576: return '#00DE65';
+            case 2097152: return '#BF2BFF';
+            case 4194304: return '#AA0EEE';
+            case 8388608: return '#9000CE';
+            case 16777216: return '#FF57A4';
+            case 33554432: return '#F02782';
+            case 67108864: return '#DA0C69';
+            case 134217728: return '#FFB60E';
+            case 268435456: return '#DC9900';
+            case 536870912: return '#C58900';
             default: return '#000000'
         }
     }
 
     this.textSize = function () {
-        return 0.75 * (gridWidth / grid.rowsAndCols - 8) / (this.value.toString().length < 2 ? this.value.toString().length : this.value.toString().length / 1.5);
+        let size = 0.75 * (gridWidth / grid.rowsAndCols - 8) / (this.value.toString().length < 2 ? this.value.toString().length : this.value.toString().length / 1.5);
+        
+        if (size < 18) {
+            return 0.75 * (gridWidth / grid.rowsAndCols - 8) / (4 / 1.5);
+        } else {
+            return size;
+        }
+    }
+
+    this.text = function () {
+        let size = 0.75 * (gridWidth / grid.rowsAndCols - 8) / (this.value.toString().length < 2 ? this.value.toString().length : this.value.toString().length / 1.5);
+        
+        if (size < 18) {
+            return `2^${Math.log2(this.value)}`;
+        } else {
+            return this.value;
+        }
     }
 
     this.textColor = function () {
@@ -396,7 +424,7 @@ function draw () {
             fill(grid.slidingTiles[i].textColor());
             textSize(grid.slidingTiles[i].textSize());
             textAlign(CENTER, CENTER);
-            text(grid.slidingTiles[i].value, 0, 0);
+            text(grid.slidingTiles[i].text(), 0, 0);
             pop();
         } else {
             grid.slidingTiles = grid.slidingTiles.splice(i--, 1);
@@ -418,7 +446,7 @@ function draw () {
                 fill(grid.playArea[i][j].textColor());
                 textSize(grid.playArea[i][j].textSize());
                 textAlign(CENTER, CENTER);
-                text(grid.playArea[i][j].value, 0, 0);
+                text(grid.playArea[i][j].text(), 0, 0);
                 pop();
             }
         }
