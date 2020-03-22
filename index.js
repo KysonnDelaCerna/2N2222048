@@ -88,7 +88,7 @@ function Tile (x, y, savedTile) {
     this.textSize = function () {
         let size = 0.75 * (gridWidth / grid.rowsAndCols - 8) / (this.value.toString().length < 2 ? this.value.toString().length : this.value.toString().length / 1.5);
         
-        if (size < 18) {
+        if (size < 6) {
             return 0.75 * (gridWidth / grid.rowsAndCols - 8) / (`2^${Math.log2(this.value)}`.length / 1.5);
         } else {
             return size;
@@ -98,7 +98,7 @@ function Tile (x, y, savedTile) {
     this.text = function () {
         let size = 0.75 * (gridWidth / grid.rowsAndCols - 8) / (this.value.toString().length < 2 ? this.value.toString().length : this.value.toString().length / 1.5);
         
-        if (size < 18) {
+        if (size < 6) {
             return `2^${Math.log2(this.value)}`;
         } else {
             return this.value;
