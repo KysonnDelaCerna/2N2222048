@@ -235,6 +235,7 @@ function Grid (savedGrid) {
                 }
             }
         }
+        saveData();
         return true;
     }
 
@@ -275,6 +276,7 @@ function Grid (savedGrid) {
         this.expandFlag = false;
 
         this.scaleAnimationCounter = 10;
+        saveData();
     }
 
     this.compareArray = function (a, b) {
