@@ -1,13 +1,22 @@
 let gridWidth;
 let grid;
 
-function Tile (x, y) {
-    this.value = random(1) < 0.9 ? 2 : 4;
-    this.popScaleAnimationCounter = 1;
-    this.newScaleAnimationCounter = 10;
-    this.curPos = [x, y];
-    this.prevPos;
-    this.translateAnimationCounter = 1;
+function Tile (x, y, savedTile) {
+    if (savedTile) {
+        this.value = savedTile.value;
+        this.popScaleAnimationCounter = savedTile.popScaleAnimationCounter;
+        this.newScaleAnimationCounter = savedTile.newScaleAnimationCounter;
+        this.curPos = savedTile.curPos;
+        this.prevPos = savedTile.prevPos;
+        this.translateAnimationCounter = savedTile.translateAnimationCounter;
+    } else {
+        this.value = random(1) < 0.9 ? 2 : 4;
+        this.popScaleAnimationCounter = 1;
+        this.newScaleAnimationCounter = 10;
+        this.curPos = [x, y];
+        this.prevPos;
+        this.translateAnimationCounter = 1;
+    }
 
     this.updatePos = function (x, y) {
         this.prevPos = this.curPos;
@@ -80,7 +89,7 @@ function Tile (x, y) {
         let size = 0.75 * (gridWidth / grid.rowsAndCols - 8) / (this.value.toString().length < 2 ? this.value.toString().length : this.value.toString().length / 1.5);
         
         if (size < 18) {
-            return 0.75 * (gridWidth / grid.rowsAndCols - 8) / (4 / 1.5);
+            return 0.75 * (gridWidth / grid.rowsAndCols - 8) / (`2^${Math.log2(this.value)}`.length / 1.5);
         } else {
             return size;
         }
@@ -123,7 +132,7 @@ function Tile (x, y) {
     }
 }
 
-function Grid () {
+function Grid (savedGrid) {
     this.score;
     this.playArea;
     this.rowsAndCols;
@@ -133,6 +142,37 @@ function Grid () {
     this.scaleAnimationCounter;
     this.numNewTiles;
     this.slidingTiles;
+    this.highscore = 0;
+
+    if (savedGrid) {
+        this.score = savedGrid.score;
+        this.rowsAndCols = savedGrid.rowsAndCols;
+        this.maxRowsAndCols = savedGrid.maxRowsAndCols;
+        this.expandFlag = savedGrid.expandFlag;
+        this.isGameOver = savedGrid.isGameOver;
+        this.scaleAnimationCounter = savedGrid.scaleAnimationCounter;
+        this.numNewTiles = savedGrid.numNewTiles;
+        this.highscore = savedGrid.highscore;
+
+        this.playArea = [];
+
+        for (let i = 0; i < this.rowsAndCols; i++) {
+            this.playArea[i] = [];
+            for (let j = 0; j < this.rowsAndCols; j++) {
+                if (savedGrid.playArea[i][j]) {
+                    this.playArea[i][j] = new Tile (0, 0, savedGrid.playArea[i][j]);
+                } else {
+                    this.playArea[i][j] = savedGrid.playArea[i][j];
+                }
+            }
+        }
+
+        this.slidingTiles = [];
+
+        for (let i = 0; i < savedGrid.slidingTiles.length; i++) {
+            this.slidingTiles[i] = new Tile (0, 0, savedGrid.slidingTiles[i]);
+        }
+    }
 
     this.newTile = function () {
         for (let h = 0; h < this.numNewTiles; h++) {
@@ -273,7 +313,7 @@ function Grid () {
 
     this.merge = function (direction) {
         let merged = false;
-        if (direction === 'RIGHT' || direction === 'DOWN') {
+        if (direction === 'LEFT' || direction === 'UP') {
             for (let i = 0; i < this.rowsAndCols; i++) {
                 for (let j = 0; j < this.rowsAndCols - 1; j++) {
                     if (null === this.playArea[i][j] || null === this.playArea[i][j + 1]) {
@@ -281,7 +321,8 @@ function Grid () {
                     }
                     if (this.playArea[i][j].value === this.playArea[i][j + 1].value) {
                         merged = true;
-                        this.playArea[i][j + 1].updatePos(i, j);
+                        this.playArea[i][j + 1].updatePos(0, 0);
+                        this.playArea[i][j + 1].curPos = this.playArea[i][j].curPos;
                         this.slidingTiles.push(this.playArea[i][j + 1]);
                         this.playArea[i][j + 1] = null;
                         this.playArea[i][j].value *= 2;
@@ -294,7 +335,7 @@ function Grid () {
                     }
                 }
             }
-        } else if (direction === 'LEFT' || direction === 'UP') {
+        } else if (direction === 'RIGHT' || direction === 'DOWN') {
             for (let i = 0; i < this.rowsAndCols; i++) {
                 for (let j = 0; j < this.rowsAndCols - 1; j++) {
                     if (null === this.playArea[i][j] || null === this.playArea[i][j + 1]) {
@@ -302,7 +343,8 @@ function Grid () {
                     }
                     if (this.playArea[i][j].value === this.playArea[i][j + 1].value) {
                         merged = true;
-                        this.playArea[i][j].updatePos(i, j);
+                        this.playArea[i][j].updatePos(0, 0);
+                        this.playArea[i][j].curPos = this.playArea[i][j + 1].curPos;
                         this.slidingTiles.push(this.playArea[i][j]);
                         this.playArea[i][j] = null;
                         this.playArea[i][j + 1].value *= 2;
@@ -374,6 +416,7 @@ function Grid () {
 
             this.newTile();
             this.isGameOver = this.checkGameOver();
+            this.highscore = this.score > this.highscore ? this.score : this.highscore;
         }
     }
 
@@ -389,8 +432,12 @@ function setup () {
     pixelDensity(1);
     frameRate(60);
     gridWidth = Math.min(Math.floor(0.95 * displayWidth), Math.floor(0.75 * displayHeight), 500);
-    grid = new Grid ();
-    grid.setUp();
+    if (localStorage.getItem('grid')) {
+        grid = new Grid (JSON.parse(localStorage.getItem('grid')));
+    } else {
+        grid = new Grid ();
+        grid.setUp();
+    }
     createCanvas(gridWidth, gridWidth).parent('canvas');
     mapSwipes();
 }
@@ -409,10 +456,10 @@ function draw () {
             rect(i * w, j * w, w, w);
         }
     }
-    for (let i = 0; i < grid.slidingTiles; i++) {
+    for (let i = 0; i < grid.slidingTiles.length; i++) {
         if (grid.slidingTiles[i].translateAnimationCounter > 1) {
             push();
-            translate(j * w + w / 2, i * w + w / 2);
+            translate(grid.slidingTiles[i].curPos[1] * w + w / 2, grid.slidingTiles[i].curPos[0] * w + w / 2);
             let [angle, distance] = grid.slidingTiles[i].translation();
             translate(p5.Vector.fromAngle(angle, distance));
             fill(grid.slidingTiles[i].tileColor());
@@ -427,7 +474,8 @@ function draw () {
             text(grid.slidingTiles[i].text(), 0, 0);
             pop();
         } else {
-            grid.slidingTiles = grid.slidingTiles.splice(i--, 1);
+            grid.slidingTiles.splice(i, 1);
+            i--;
         }
     }
     for (let i = 0; i < grid.rowsAndCols; i++) {
@@ -454,6 +502,7 @@ function draw () {
     pop();
 
     select('#score').html(`Score: ${grid.score}`);
+    select('#highscore').html(`High Score: ${grid.highscore}`);
 
     if (grid.isGameOver) {
         push();
@@ -476,13 +525,15 @@ function keyPressed () {
         grid.move('RIGHT');
     } else if (keyCode === 82) {
         grid.setUp();
+    } else if (keyCode === 81) {
+        localStorage.setItem('grid', JSON.stringify(grid));
     }
 }
 
 function mapSwipes () {
-    let body = document.getElementsByTagName('body');
+    let canvas = document.getElementsByTagName('canvas');
 
-    let listener = new Hammer(body[0], {});
+    let listener = new Hammer(canvas[0], {});
 
     listener.on('swipe', function (e) {
         let angle = e.angle;
