@@ -440,6 +440,8 @@ function setup () {
     }
     createCanvas(gridWidth, gridWidth).parent('canvas');
     mapSwipes();
+
+    setInterval(saveData, 60000);
 }
 
 function draw () {
@@ -526,7 +528,7 @@ function keyPressed () {
     } else if (keyCode === 82) {
         grid.setUp();
     } else if (keyCode === 81) {
-        localStorage.setItem('grid', JSON.stringify(grid));
+        saveData();
     }
 }
 
@@ -550,4 +552,8 @@ function mapSwipes () {
     });
 
     listener.get('swipe').set({ direction: Hammer.DIRECTION_ALL });
+}
+
+function saveData () {
+    localStorage.setItem('grid', JSON.stringify(grid));
 }
