@@ -266,8 +266,11 @@ function Grid (savedGrid) {
         }
 
         this.rowsAndCols++;
-        this.numNewTiles++;
 
+        if (this.rowsAndCols % 2 == 0) {
+            this.numNewTiles++;
+        }
+        
         this.playArea.forEach(function (item) {
             item.push(null);
         });
@@ -432,7 +435,7 @@ function Grid (savedGrid) {
 
 function setup () {
     pixelDensity(1);
-    frameRate(60);
+    frameRate(30);
     gridWidth = Math.min(Math.floor(0.95 * displayWidth), Math.floor(0.75 * displayHeight), 500);
     if (localStorage.getItem('grid')) {
         grid = new Grid (JSON.parse(localStorage.getItem('grid')));
