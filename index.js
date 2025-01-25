@@ -435,7 +435,7 @@ function Grid (savedGrid) {
 
 function setup () {
     pixelDensity(1);
-    frameRate(30);
+    frameRate(60);
     gridWidth = Math.min(Math.floor(0.95 * displayWidth), Math.floor(0.75 * displayHeight), 500);
     if (localStorage.getItem('grid')) {
         grid = new Grid (JSON.parse(localStorage.getItem('grid')));
